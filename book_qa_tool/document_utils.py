@@ -1,6 +1,6 @@
 import random
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from pdf2image import convert_from_bytes
 from PIL import Image
@@ -56,7 +56,7 @@ def extract_text_from_pdf(pdf_path: Path):
 
 def extract_random_k_consecutive_pages_as_images(
     folder_path: Path, k: int
-) -> List[Image.Image]:
+) -> Tuple[Path, List[Image.Image]]:
     """
     Extracts a random k consecutive pages from a random PDF in a folder as images.
     If the selected PDF has less than k pages, all of its pages are extracted.
@@ -86,7 +86,7 @@ def extract_random_k_consecutive_pages_as_images(
         logger.info(
             f"PDF has {total_pages} pages, which is less than or equal to k ({k}). Extracting all pages."
         )
-        return extract_images_from_pdf(random_pdf_path)
+        return random_pdf_path, extract_images_from_pdf(random_pdf_path)
     else:
         start_page_index = random.randint(0, total_pages - k)
         first_page = start_page_index + 1  # convert to 1-indexed
@@ -94,6 +94,6 @@ def extract_random_k_consecutive_pages_as_images(
         logger.info(
             f"Extracting {k} consecutive pages from page {first_page} to {last_page}."
         )
-        return extract_images_from_pdf(
+        return random_pdf_path, extract_images_from_pdf(
             random_pdf_path, first_page=first_page, last_page=last_page
         )

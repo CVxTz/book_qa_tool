@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" x-data="qaApp()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book QA Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .dot-animation span {
+            animation: bounce 1s infinite;
+            display: inline-block;
+        }
+        .dot-animation span:nth-child(2) { animation-delay: 0.2s; }
+        .dot-animation span:nth-child(3) { animation-delay: 0.4s; }
+        .slide-down {
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center" x-cloak>
+    <div class="w-full max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-8">
+
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Book Question & Answer Generator</h1>
+            <p class="text-gray-500 mt-2">Click the button to generate a new question from our book database.</p>
+        </div>
+
+        <div class="flex justify-center mb-6">
+            <button
+                @click="generateQA()"
+                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:bg-blue-400 transition-colors duration-300"
+                :disabled="loading">
+                <span x-show="!loading">Generate New Question</span>
+                <span x-show="loading">Generating...</span>
+            </button>
+        </div>
+
+        <div x-show="loading" class="text-center my-4">
+             <div class="inline-block p-3 rounded-lg max-w-sm lg:max-w-lg text-sm bg-gray-200 text-gray-800">
+                <div class="dot-animation">
+                    <span>.</span><span>.</span><span>.</span>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="question" x-transition class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
+                <h2 class="text-lg font-semibold text-gray-700">Question:</h2>
+                <p class="text-gray-800 mt-2" x-text="question"></p>
+            </div>
+
+            <div>
+                <button
+                    @click="showAnswer = !showAnswer"
+                    class="w-full text-left bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg focus:outline-none text-gray-700 font-medium transition-colors duration-300">
+                    <span x-show="!showAnswer">Show Answer</span>
+                    <span x-show="showAnswer">Hide Answer</span>
+                </button>
+                <div
+                    x-show="showAnswer"
+                    x-collapse
+                    class="bg-green-50 p-4 mt-2 rounded-lg border-l-4 border-green-500 shadow-inner">
+                    <h2 class="text-lg font-semibold text-gray-700">Answer:</h2>
+                    <p class="text-gray-800 mt-2" x-text="answer"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function qaApp() {
+            return {
+                question: null,
+                answer: null,
+                loading: false,
+                showAnswer: false,
+
+                async generateQA() {
+                    this.loading = true;
+                    this.showAnswer = false; // Hide previous answer
+
+                    try {
+                        const response = await fetch('/generate_question_answer', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        this.question = data.question;
+                        this.answer = data.answer;
+
+                    } catch (error) {
+                        console.error('Error generating question and answer:', error);
+                        this.question = 'Failed to load a question. Please try again.';
+                        this.answer = 'Could not retrieve an answer due to an error.';
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
