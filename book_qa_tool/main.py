@@ -60,7 +60,7 @@ def generate_response(agent) -> QAPair:
         return result["qa_pair"]
     except Exception as e:
         logger.error(f"Error generating response: {e}")
-        return QAPair(question="Missing", answer="Missing")
+        return QAPair(book="", question="Missing", answer="Missing")
 
 
 static_file_path = pathlib.Path(__file__).parent / "static"

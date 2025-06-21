@@ -15,6 +15,7 @@ from book_qa_tool.logger import logger
 class QAPair(BaseModel):
     """Defines the structure for a question and answer pair."""
 
+    book: str = Field(description="Book name and page")
     question: str = Field(description="The generated question from the document.")
     answer: str = Field(description="The corresponding answer to the question.")
 
@@ -60,7 +61,7 @@ class QAGenerationAgent:
                 content=[
                     {
                         "type": "text",
-                        "text": """
+                        "text": f"""
                         You are an expert assistant. Your task is to generate a single, insightful question and a corresponding detailed answer based *only* on the content of the provided image(s).
 
                         Please adhere to the following rules:
@@ -70,12 +71,8 @@ class QAGenerationAgent:
                         4.  The Question should be in the format of a job interview question.
                         5.  The question and answer should be understandable without having to look at the images.
                         6.  The answer should be like a job interview answer and be as detailed as possible. Use markdown.
-
-                        Example Output:
-                        {
-                            "question": "What is photosynthesis?",
-                            "answer": "the process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water. Photosynthesis in plants generally involves the green pigment chlorophyll and generates oxygen as a by-product."
-                        }
+                        
+                        Images are from this book: {state.selected_pdf.stem}
                         """,
                     }
                 ]

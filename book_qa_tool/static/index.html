@@ -6,6 +6,7 @@
     <title>Book QA Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         @keyframes bounce {
@@ -50,6 +51,10 @@
         </div>
 
         <div x-show="question" x-transition class="space-y-4">
+            <div x-show="book" class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500 shadow-inner">
+                <h2 class="text-md font-semibold text-blue-700">Source:</h2>
+                <p class="text-blue-800 mt-1" x-text="book"></p>
+            </div>
             <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
                 <h2 class="text-lg font-semibold text-gray-700">Question:</h2>
                 <p class="text-gray-800 mt-2" x-text="question"></p>
@@ -67,40 +72,61 @@
                     x-collapse
                     class="bg-green-50 p-4 mt-2 rounded-lg border-l-4 border-green-500 shadow-inner">
                     <h2 class="text-lg font-semibold text-gray-700">Answer:</h2>
-                    <p class="text-gray-800 mt-2" x-text="answer"></p>
+                    <div class="text-gray-800 mt-2 markdown-content" x-html="parseMarkdown(answer)"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        const renderer = new marked.Renderer();
+        marked.setOptions({
+            breaks: true, // Render GFM line breaks (less strict than original)
+            sanitize: true, // Sanitize the output HTML (important for untrusted input) - KEEP THIS IF USING USER-GENERATED CONTENT
+            renderer: renderer
+        });
+
         function qaApp() {
             return {
                 question: null,
                 answer: null,
+                book: null, // New property for book information
                 loading: false,
                 showAnswer: false,
+
+                // Method to parse Markdown content
+                parseMarkdown(content) {
+                    if (!content) return '';
+                    return marked.parse(content);
+                },
+
 
                 async generateQA() {
                     this.loading = true;
                     this.showAnswer = false; // Hide previous answer
+                    this.question = null; // Clear previous question
+                    this.answer = null;   // Clear previous answer
+                    this.book = null;     // Clear previous book
 
                     try {
+
                         const response = await fetch('/generate_question_answer', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
+                             method: 'POST',
+                             headers: {'Content-Type': 'application/json'},
                         });
 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                         if (!response.ok) {
+                             throw new Error(`HTTP error! status: ${response.status}`);
+                         }
+                         const data = await response.json(); // For real API call
 
-                        const data = await response.json();
+                        this.book = data.book; // Set the book information
                         this.question = data.question;
                         this.answer = data.answer;
 
                     } catch (error) {
                         console.error('Error generating question and answer:', error);
+                        this.book = 'N/A';
                         this.question = 'Failed to load a question. Please try again.';
                         this.answer = 'Could not retrieve an answer due to an error.';
                     } finally {
